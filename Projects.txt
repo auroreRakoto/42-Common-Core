@@ -1,0 +1,15 @@
+1.
+- Libft - Bonus
+2.
+- Born To be Root - NO
+- Get next line - Bonus?
+- Printf - Bonus?
+3.
+- Pushswap -> look for max needed
+- Fdf -> correct previous code
+- Minitalk -> Bonus
+- Exam
+4.
+- Philosopher -> Make it work
+- MiniShell
+- Exam
