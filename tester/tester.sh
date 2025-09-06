@@ -1,18 +1,15 @@
 #!/bin/bash
 set -e
 
-# Absolute path to this tester folder
 SCRIPT_DIR="$(cd -- "$(dirname "$0")" && pwd)"
 
 PROJECT="$1"
 if [ -z "$PROJECT" ]; then
-  echo "Usage: ./tester.sh [libft|philo|gnl]"
+  echo "Usage: ./tester.sh [libft|printf|philo|gnl]"
   exit 1
 fi
 
-# Determine project dir:
-# - If we're already inside that project (basename $PWD == $PROJECT), use current dir
-# - Otherwise, fallback to ../$PROJECT relative to tester
+# Are we already inside that project? else fallback to ../<project>
 if [ "$(basename "$PWD")" = "$PROJECT" ]; then
   PROJECT_DIR="$PWD"
 else
@@ -24,26 +21,31 @@ if [ ! -d "$PROJECT_DIR" ]; then
   exit 1
 fi
 
-# Build the project if it has a Makefile
+# Build project if Makefile exists (silent)
 if [ -f "$PROJECT_DIR/Makefile" ] || [ -f "$PROJECT_DIR/makefile" ] || [ -f "$PROJECT_DIR/GNUmakefile" ]; then
   echo "📂 Found Makefile in $PROJECT_DIR"
   make -s -C "$PROJECT_DIR" 1>/dev/null
 else
-  echo "⚠️  No Makefile found in $PROJECT_DIR (Makefile pre-tests will be skipped)."
+  echo "⚠️  No Makefile found in $PROJECT_DIR"
 fi
 
-# Build the test harness via tester/Makefile (only for libft tests)
-if [ "$PROJECT" = "libft" ]; then
-  make -s -C "$SCRIPT_DIR" libft_test 1>/dev/null
-fi
 
-# Run Python runner (Windows-friendly selection)
-if command -v py >/dev/null 2>&1; then
-  PY=py
-elif command -v python3 >/dev/null 2>&1; then
-  PY=python3
-else
-  PY=python
+# Build harness in tester via Makefile (silent)
+case "$PROJECT" in
+  libft)      make -s -C "$SCRIPT_DIR" libft_test   1>/dev/null ;;
+  printf|ft_printf)
+              make -s -C "$SCRIPT_DIR" printf_test 1>/dev/null ;;
+  get_next_line|gnl)        
+              make -s -C "$SCRIPT_DIR" gnl_tests    1>/dev/null ;;
+  philo)  : ;;
+  *)          : ;;
+esac
+
+
+# Run Python
+if command -v py >/dev/null 2>&1; then PY=py
+elif command -v python3 >/dev/null 2>&1; then PY=python3
+else PY=python
 fi
 
 "$PY" "$SCRIPT_DIR/main.py" "$PROJECT"

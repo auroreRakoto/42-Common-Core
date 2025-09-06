@@ -1,0 +1,9 @@
+[ft_printf]
+"Hello"|Hello
+"Hello %s|World"|Hello World
+"Value: %d|42"|Value: 42
+"Char: %c|A"|Char: A
+"Mix %s %d|Test|123"|Mix Test 123
+"Ptr %p|X"|Ptr 0x
+"Hex %x|2a"|Hex 2a
+"Pct %% OK"|Pct % OK
