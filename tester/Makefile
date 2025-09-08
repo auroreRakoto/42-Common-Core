@@ -5,7 +5,7 @@ else
 EXE :=
 endif
 
-CC      ?= gcc
+CC      := gcc
 CFLAGS  := -Wall -Wextra -Werror
 RM      := rm -f
 

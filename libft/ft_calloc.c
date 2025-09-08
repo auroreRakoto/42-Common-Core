@@ -21,6 +21,8 @@ void	*ft_calloc(size_t nmemb, size_t size)
 		nmemb = 1;
 		size = 1;
 	}
+	if (nmemb > INT_MAX || size > INT_MAX || nmemb * size > INT_MAX)
+		return (NULL);
 	tab = malloc(nmemb * size);
 	if (!tab)
 		return (NULL);

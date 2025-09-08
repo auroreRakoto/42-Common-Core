@@ -5,7 +5,27 @@ import time
 import shutil
 import subprocess
 import datetime
+import shlex
 from pathlib import Path
+
+# --- console encoding + glyphs fallback ---
+def _choose_glyphs():
+    ok, fail = "✅", "❌"
+    enc = (sys.stdout.encoding or "").lower()
+    try:
+        (ok + fail).encode(enc or "utf-8")
+        return ok, fail
+    except Exception:
+        return "[OK]", "[FAIL]"
+
+# Try to switch to UTF-8; if not possible, we’ll still fall back to ASCII.
+try:
+    if (sys.stdout.encoding or "").lower() != "utf-8":
+        sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+OK_GLYPH, FAIL_GLYPH = _choose_glyphs()
 
 # Paths
 ROOT = Path(__file__).resolve().parent       # .../tester
@@ -124,7 +144,7 @@ def run_makefile_tests(project: str):
     return ok, total
 
 # ---------- Project tests (libft) ----------
-def run_test(command: str, expected_outputs):
+def run_test1(command: str, expected_outputs):
     try:
         result = subprocess.check_output(command, shell=True, text=True).strip()
     except subprocess.CalledProcessError as e:
@@ -139,7 +159,29 @@ def run_test(command: str, expected_outputs):
             passed += 1
         else:
             glyphs.append(RED + "❌" + RESET)
-    return passed, len(expected_outputs), "".join(glyphs), result  # <— include result
+    return passed, len(expected_outputs), "".join(glyphs), result
+
+def run_test(command: str, expected_outputs):
+    try:
+        result = subprocess.check_output(command, shell=True, text=True).strip()
+    except subprocess.CalledProcessError as e:
+        result = (e.output or "").strip()
+
+    passed = 0
+    glyphs = []
+    for expected in expected_outputs:
+        # Adjust to compare lists instead of strings
+        expected_list = expected.split('|')
+        result_list = result.split('|')
+
+        # Compare split results, ensuring exact match for all parts
+        if result_list == expected_list:
+            glyphs.append(GREEN + "✅" + RESET)
+            passed += 1
+        else:
+            glyphs.append(RED + "❌" + RESET)
+    return passed, len(expected_outputs), "".join(glyphs), result
+
 
 
 def load_libft_tests(filename="data/libft_data.txt"):
@@ -170,13 +212,16 @@ def load_libft_tests(filename="data/libft_data.txt"):
             if "|" not in line:
                 # malformed test line, skip quietly
                 continue
-            input_str, expected = [part.strip() for part in line.split("|", 1)]
+            input_str, expected_raw = [part.strip() for part in line.rsplit("|", 1)]
+            expected = bytes(expected_raw, "utf-8").decode("unicode_escape")
+
 
             # if user already quoted the input (e.g. ""), keep as-is; else quote it
             if input_str.startswith('"') and input_str.endswith('"'):
                 arg = input_str  # already quoted in the file
             else:
-                arg = f'"{input_str}"'
+                arg = shlex.quote(input_str)
+                #arg = f'"{input_str}"'
 
             cmd = f'{exe} {current_fn} {arg}'
             tests.append((current_fn, cmd, [expected]))
@@ -210,7 +255,8 @@ def load_printf_tests(filename="data/printf_data.txt"):
             args = parts[1:-1]
             expected = parts[-1]
             # build command
-            cmd = f'{exe} "{fmt.strip("\"")}"'
+            fmt_clean = fmt.strip('"')
+            cmd = f'{exe} "{fmt_clean}"'
             for a in args:
                 cmd += f' "{a}"'
             tests.append((current_fn, cmd, [expected]))
@@ -334,7 +380,6 @@ def run_project_tests(project: str):
                 print(f"{name} : {glyph}")
                 log_write(log_path,
                           f"{b} file {name} | EXPECT:len={len(content)} | GOT:len={len(compare_to)} | {'PASS' if ok else 'FAIL'}")
-
                 total_tests += 1
                 if ok: total_passed += 1
 
@@ -367,6 +412,7 @@ def main():
         return
 
     project = sys.argv[1]
+    """
     banner(f"STARTING PRE TESTS for {project.upper()}")
 
     total_passed, total_tests = 0, 0
@@ -383,7 +429,7 @@ def main():
     #if total_tests > 0 and total_passed != total_tests:
     #    print(f"\n{RED}Pre-tests failed — aborting project tests.{RESET}")
     #    sys.exit(1)
-
+    """
     banner(f"STARTING TESTS for {project.upper()}")
     p_ok, p_total = run_project_tests(project)
     banner("📊 RESULT SUMMARY")

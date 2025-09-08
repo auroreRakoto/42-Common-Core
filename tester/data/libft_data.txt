@@ -4,14 +4,9 @@
 0|0
 999|999
 -1|-1
---42|-42
+--42|0
 a|0
 ""|0
-
-[ft_strlen]
-Hello|5
-""|0
-abc|3
 
 [ft_bzero]
 "abcd,0"|hex:61626364
@@ -81,18 +76,18 @@ abc|3
 "abc|abd|2"|0
 
 [ft_memcpy]
-"abcd|0"|hex:61626364
-"abcd|2"|hex:61626364
+"abcd|0"|hex:00000000
+"abcd|2"|hex:61620000
 "abcd|4"|hex:61626364
 
 [ft_memmove]
-"abcdef|0|2|3"|hex:ababcf
-"abcdef|2|0|3"|hex:cde def
-"aaaaa|0|1|4"|hex:aaaaa
+"abcdef|0|2|3"|hex:616261626366
+"abcdef|2|0|3"|hex:636465646566
+"aaaaa|0|1|4"|hex:6161616161
 
 [ft_memset]
 "abcd|X|0"|hex:61626364
-"abcd|X|2"|hex:58686364
+"abcd|X|2"|hex:58586364
 "abcd|X|4"|hex:58585858
 
 [ft_putchar_fd]
@@ -109,9 +104,10 @@ abc|3
 "Hello"|Hello
 
 [ft_split]
-"a,b,c|,"|split:a|b|c
-",,a,,b,|,"|split:a|b
-""|,"|split:
+a,b,c|,|split:a|b|c
+,,a,,b,|,|split:a|b
+|,|split:
+
 
 [ft_strchr]
 "abcde|c"|idx:2
@@ -133,7 +129,7 @@ abc|3
 
 [ft_strlcat]
 "abc|def|0"|ret:3;dst:
-"abc|def|2"|ret:5;dst:a
+"abc|def|2"|ret:5;dst:abc
 "abc|def|6"|ret:6;dst:abcdef
 
 [ft_strlcpy]
@@ -143,8 +139,9 @@ abc|3
 "abc|4"|ret:3;dst:abc
 
 [ft_strlen]
-"Hello"|5
+Hello|5
 ""|0
+abc|3
 
 [ft_strmapi]
 "abc"|bcd
@@ -184,3 +181,4 @@ abc|3
 "z"|Z
 "Z"|Z
 "5"|5
+"\x7F"|\x7F

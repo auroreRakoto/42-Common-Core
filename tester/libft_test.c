@@ -72,14 +72,50 @@ static char **split_fields(const char *s, size_t *outc) {
     *outc = n;
     return arr;
 }
+
+unsigned char parse_char(const char *s) {
+    if (s[0] == '\\' && s[1] == 'x') {
+        return (unsigned char)strtol(s + 2, NULL, 16); // handles \x1F
+    }
+    return (unsigned char)s[0]; // normal char like ' ' or '~'
+}
+
 static void free_fields(char **a, size_t n){ for(size_t i=0;i<n;i++) free(a[i]); free(a); }
 
 /* tolerant unsigned long parser */
 static unsigned long uln(const char *s){ char *e; unsigned long v=strtoul(s,&e,10); return v; }
 
 /* callbacks used by strmapi / striteri */
-static char map_plus1(unsigned int i, char c){ (void)i; return (char)(c + 1); }
-static void iter_plus1(unsigned int i, char *c){ (void)i; if (c) *c = (char)(*c + 1); }
+static char map_plus1(unsigned int i, char c)
+{
+    (void)i;
+    if (c >= 'a' && c < 'z')
+        return c + 1;
+    else if (c == 'z')
+        return 'a';
+    else if (c >= 'A' && c < 'Z')
+        return c + 1;
+    else if (c == 'Z')
+        return 'A';
+    else
+        return c;
+}
+
+static void iter_plus1(unsigned int i, char *c)
+{
+    (void)i;
+    if (!c)
+        return;
+    if (*c >= 'a' && *c < 'z')
+        *c = *c + 1;
+    else if (*c == 'z')
+        *c = 'a';
+    else if (*c >= 'A' && *c < 'Z')
+        *c = *c + 1;
+    else if (*c == 'Z')
+        *c = 'A';
+}
+
 
 /* ---------- dispatcher ---------- */
 /*
@@ -131,20 +167,33 @@ int main(int argc, char **argv)
     if (strcmp(fn, "ft_strlen") == 0) { printf("%lu\n", (unsigned long)ft_strlen(arg)); return 0; }
     if (strcmp(fn, "ft_isalnum") == 0){ int c=(unsigned char)arg[0]; printf("%d\n", ft_isalnum(c)?1:0); return 0; }
     if (strcmp(fn, "ft_isalpha") == 0){ int c=(unsigned char)arg[0]; printf("%d\n", ft_isalpha(c)?1:0); return 0; }
-    if (strcmp(fn, "ft_isascii") == 0){ int c=(unsigned char)arg[0]; printf("%d\n", ft_isascii(c)?1:0); return 0; }
+    if (strcmp(fn, "ft_isascii") == 0){ int c = parse_char(arg); printf("%d\n", ft_isascii(c)?1:0); return 0; }
     if (strcmp(fn, "ft_isdigit") == 0){ int c=(unsigned char)arg[0]; printf("%d\n", ft_isdigit(c)?1:0); return 0; }
-    if (strcmp(fn, "ft_isprint") == 0){ int c=(unsigned char)arg[0]; printf("%d\n", ft_isprint(c)?1:0); return 0; }
+    if (strcmp(fn, "ft_isprint") == 0){ int c = parse_char(arg); printf("%d\n", ft_isprint(c)?1:0); return 0; }
 
     /* ----- memory ops ----- */
-    if (strcmp(fn, "ft_bzero") == 0) {
+    if (strcmp(fn, "ft_bzero") == 0)
+    {
         size_t L=0,N=0; unsigned char *buf = parse_str_and_n(arg,&L,&N);
-        if (!buf) { puts("hex:"); return 0; }
-        if (N > L) N = L;
-        ft_bzero(buf, N); hex_dump(buf, L); free(buf); return 0;
+        if (!buf)
+        {
+            puts("hex:");
+            return 0;
+        }
+        if (N > L)
+            N = L;
+        ft_bzero(buf, N);
+        hex_dump(buf, L);
+        free(buf);
+        return 0;
     }
     if (strcmp(fn, "ft_calloc") == 0) {
         const char *comma = strrchr(arg, ',');
-        if (!comma) { puts("zero"); return 0; }
+        if (!comma)
+        {
+            puts("zero");
+            return 0;
+        }
         /* ft_calloc branch */
         long count = strtol(arg, NULL, 10);
         long size  = strtol(comma + 1, NULL, 10);
@@ -153,9 +202,14 @@ int main(int argc, char **argv)
         if (size  < 0) size  = 0;
         size_t total = (size_t)count * (size_t)size;
         void *p = ft_calloc((size_t)count, (size_t)size);
-        if (!p) { puts("null"); return 0; }
+        if (!p)
+        {
+            puts("null");
+            return 0;
+        }
         printf("%s\n", all_zero((const unsigned char*)p, total) ? "zero" : "nonzero");
-        free(p); return 0;
+        free(p);
+        return 0;
     }
     if (strcmp(fn, "ft_memchr") == 0) {
         size_t nfields=0; char **f = split_fields(arg,&nfields);
@@ -174,59 +228,132 @@ int main(int argc, char **argv)
         unsigned long n = uln(f[2]); int r = ft_memcmp(f[0], f[1], (size_t)n);
         printf("%d\n", r); free_fields(f,nfields); return 0;
     }
-    if (strcmp(fn, "ft_memcpy") == 0) {
-        size_t nfields=0; char **f = split_fields(arg,&nfields);
-        if (!f || nfields != 2) { puts("hex:"); if(f)free_fields(f,nfields); return 0; }
-        size_t len = strlen(f[0]); unsigned long n = uln(f[1]); if (n > len) n = len;
+    if (strcmp(fn, "ft_memcpy") == 0)
+    {
+        size_t nfields=0;
+        char **f = split_fields(arg,&nfields);
+        if (!f || nfields != 2)
+        {
+            puts("hex:");
+            if(f)
+                free_fields(f,nfields);
+            return 0;
+        }
+        size_t len = strlen(f[0]);
+        unsigned long n = uln(f[1]);
+        if (n > len)
+            n = len;
         unsigned char *dst = (unsigned char*)calloc(len?len:1,1);
-        if (!dst) { free_fields(f,nfields); puts("hex:"); return 0; }
-        if (n) ft_memcpy(dst, f[0], (size_t)n);
-        hex_dump(dst, len); free(dst); free_fields(f,nfields); return 0;
+        if (!dst)
+        {
+            free_fields(f,nfields);
+            puts("hex:");
+            return 0;
+        }
+        ft_memcpy(dst, f[0], (size_t)n);
+        hex_dump(dst, len);
+        free(dst);
+        free_fields(f,nfields);
+        return 0;
     }
-    if (strcmp(fn, "ft_memmove") == 0) {
-        size_t nfields=0; char **f = split_fields(arg,&nfields); /* "STRING|FROM|TO|N" */
-        if (!f || nfields != 4) { puts("hex:"); if(f)free_fields(f,nfields); return 0; }
-        size_t len = strlen(f[0]); unsigned char *buf = (unsigned char*)malloc(len?len:1);
-        if (!buf) { free_fields(f,nfields); puts("hex:"); return 0; }
-        if (len) memcpy(buf, f[0], len);
+    if (strcmp(fn, "ft_memmove") == 0)
+    {
+        size_t nfields=0;
+        char **f = split_fields(arg,&nfields);
+        if (!f || nfields != 4)
+        {
+            puts("hex:");
+            if(f)
+                free_fields(f,nfields);
+            return 0;
+        }
+        size_t len = strlen(f[0]);
+        unsigned char *buf = (unsigned char*)malloc(len?len:1);
+        if (!buf)
+        {
+            free_fields(f,nfields);
+            puts("hex:");
+            return 0;
+        }
+        if (len)
+            memcpy(buf, f[0], len);
         unsigned long from = uln(f[1]), to = uln(f[2]), n = uln(f[3]);
-        /* ft_memmove branch */
-        /* before: if (from > len) from = len; if (to > len) to = len; */
-        if (from > len) from = len;
+        if (from > len)
+            from = len;
         if (to   > len) to   = len;
-
-        if (n > len) n = len;
-        if (from + n > len) n = (unsigned long)(len - from);
-        if (to   + n > len) n = (unsigned long)(len - to);
-        if (n) ft_memmove(buf + to, buf + from, (size_t)n);
-        hex_dump(buf, len); free(buf); free_fields(f,nfields); return 0;
+        if (n > len)
+            n = len;
+        if (from > len) from = len;
+        if (to > len)   to = len;
+        if (n > len - from) n = len - from;
+        if (n > len - to)   n = len - to;
+        ft_memmove(buf + to, buf + from, (size_t)n);
+        hex_dump(buf, len);
+        free(buf);
+        free_fields(f,nfields);
+        return 0;
     }
     if (strcmp(fn, "ft_memset") == 0) {
-        size_t nfields=0; char **f = split_fields(arg,&nfields); /* "STRING|CH|N" */
-        if (!f || nfields != 3) { puts("hex:"); if(f)free_fields(f,nfields); return 0; }
-        size_t len = strlen(f[0]); unsigned char *buf = (unsigned char*)malloc(len?len:1);
-        if (!buf) { free_fields(f,nfields); puts("hex:"); return 0; }
-        if (len) memcpy(buf, f[0], len);
-        int ch = (unsigned char)f[1][0]; unsigned long n = uln(f[2]); if (n > len) n = len;
-        if (n) ft_memset(buf, ch, (size_t)n);
-        hex_dump(buf, len); free(buf); free_fields(f,nfields); return 0;
+        size_t nfields=0;
+        char **f = split_fields(arg,&nfields);
+        if (!f || nfields != 3)
+        {
+            puts("hex:");
+            if(f)
+                free_fields(f,nfields);
+            return 0;
+        }
+        size_t len = strlen(f[0]);
+        unsigned char *buf = (unsigned char*)malloc(len?len:1);
+        if (!buf)
+        {
+            free_fields(f,nfields);
+            puts("hex:");
+            return 0;
+        }
+        if (len)
+            memcpy(buf, f[0], len);
+        int ch = (unsigned char)f[1][0];
+        unsigned long n = uln(f[2]);
+        if (n > len)
+            n = len;
+        ft_memset(buf, ch, (size_t)n);
+        hex_dump(buf, len);
+        free(buf);
+        free_fields(f,nfields);
+        return 0;
     }
 
     /* ----- fd output ----- */
     if (strcmp(fn, "ft_putchar_fd") == 0) { ft_putchar_fd((unsigned char)arg[0], 1); return 0; }
-    if (strcmp(fn, "ft_putendl_fd") == 0) { ft_putendl_fd((char*)arg, 1); return 0; }
+    if (strcmp(fn, "ft_putendl_fd") == 0)
+    {
+        ft_putendl_fd((char*)arg, 1);
+        return 0;
+    }
     if (strcmp(fn, "ft_putnbr_fd")  == 0) { int n=(int)strtol(arg,NULL,10); ft_putnbr_fd(n,1); return 0; }
     if (strcmp(fn, "ft_putstr_fd")  == 0) { ft_putstr_fd((char*)arg, 1); return 0; }
 
     /* ----- strings ----- */
-    if (strcmp(fn, "ft_split") == 0) {
-        size_t nfields=0; char **f = split_fields(arg,&nfields); /* "STRING|SEP" */
-        if (!f || nfields != 2) { puts("split:"); if(f)free_fields(f,nfields); return 0; }
+    if (strcmp(fn, "ft_split") == 0)
+    {
+        size_t nfields=0;
+        char **f = split_fields(arg,&nfields);
+        if (!f || nfields != 2)
+        {
+            puts("split:");
+            if(f)
+                free_fields(f,nfields);
+            return 0;
+        }
         char **arr = ft_split(f[0], (unsigned char)f[1][0]);
         fputs("split:", stdout);
-        if (arr) {
-            for (size_t i=0; arr[i]; ++i) {
-                if (i) putchar('|');
+        if (arr)
+        {
+            for (size_t i=0; arr[i]; ++i)
+            {
+                if (i)
+                    putchar('|');
                 fputs(arr[i], stdout);
                 free(arr[i]);
             }
@@ -246,47 +373,113 @@ int main(int argc, char **argv)
         char *dup = ft_strdup(arg); if (!dup) { puts("(null)"); return 0; }
         puts(dup); free(dup); return 0;
     }
-    if (strcmp(fn, "ft_striteri") == 0) {
-        char *buf = strdup(arg ? arg : ""); if (!buf) { puts("(null)"); return 0; }
-        ft_striteri(buf, iter_plus1); puts(buf); free(buf); return 0;
+    if (strcmp(fn, "ft_striteri") == 0)
+    {
+        char *buf = strdup(arg ? arg : "");
+        if (!buf)
+        {
+            puts("(null)");
+            return 0;
+            }
+        ft_striteri(buf, iter_plus1);
+        puts(buf);
+        free(buf);
+        return 0;
     }
-    if (strcmp(fn, "ft_strjoin") == 0) {
-        size_t nfields=0; char **f = split_fields(arg,&nfields); /* "S1|S2" */
-        if (!f || nfields != 2) { puts("(null)"); if(f)free_fields(f,nfields); return 0; }
-        char *res = ft_strjoin(f[0], f[1]); if (!res) puts("(null)"); else { puts(res); free(res); }
+    if (strcmp(fn, "ft_strjoin") == 0)
+    {
+        size_t nfields=0;
+        char **f = split_fields(arg,&nfields);
+        if (!f || nfields != 2)
+        {
+            puts("(null)");
+            if(f)
+                free_fields(f,nfields);
+            return 0;
+        }
+        char *res = ft_strjoin(f[0], f[1]);
+        if (!res)
+            puts("(null)");
+        else
+        {
+            puts(res);
+            free(res);
+        }
         free_fields(f,nfields); return 0;
     }
-    if (strcmp(fn, "ft_strlcat") == 0) {
-        size_t nfields=0; char **f = split_fields(arg,&nfields); /* "DST|SRC|SIZE" */
-        if (!f || nfields != 3) { puts("ret:0;dst:"); if(f)free_fields(f,nfields); return 0; }
-        const char *dst_in = f[0], *src = f[1]; unsigned long size = uln(f[2]);
-        char *buf = (char*)malloc(size ? size : 1); if (!buf) { free_fields(f,nfields); puts("ret:0;dst:"); return 0; }
-        if (size) {
-            size_t in_len = strlen(dst_in);
-            size_t copy = (size > 0) ? ((in_len < (size - 1)) ? in_len : (size - 1)) : 0;
-            if (copy) memcpy(buf, dst_in, copy);
-            buf[copy] = '\0';
-        } else {
-            buf[0] = '\0';
+    if (strcmp(fn, "ft_strlcat") == 0)
+    {
+        size_t nfields=0;
+        char **f = split_fields(arg,&nfields);
+        if (!f || nfields != 3)
+        {
+            puts("ret:0;dst:");
+            if(f)
+                free_fields(f,nfields);
+            return 0;
         }
+        const char *dst_in = f[0];
+        const char *src = f[1];
+        unsigned long size = uln(f[2]);
+        char *buf = (char*)malloc(size ? size : 1);
+        if (!buf)
+        {
+            free_fields(f,nfields);
+            puts("ret:0;dst:");
+            return 0;
+        }
+        if (size)
+        {
+            size_t in_len = strlen(dst_in);
+            memcpy(buf, dst_in, in_len);
+            buf[in_len] = '\0';
+        }
+        else
+            buf[0] = '\0';
         unsigned long ret = (unsigned long)ft_strlcat(buf, src, (size_t)size);
         printf("ret:%lu;dst:%s\n", ret, buf);
-        free(buf); free_fields(f,nfields); return 0;
+        free(buf);
+        free_fields(f,nfields);
+        return 0;
     }
-    if (strcmp(fn, "ft_strlcpy") == 0) {
-        size_t nfields=0; char **f = split_fields(arg,&nfields); /* "SRC|SIZE" */
-        if (!f || nfields != 2) { puts("ret:0;dst:"); if(f)free_fields(f,nfields); return 0; }
-        const char *src = f[0]; unsigned long size = uln(f[1]);
-        char *buf = (char*)malloc(size ? size : 1); if (!buf) { free_fields(f,nfields); puts("ret:0;dst:"); return 0; }
+    if (strcmp(fn, "ft_strlcpy") == 0)
+    {
+        size_t nfields=0;
+        char **f = split_fields(arg,&nfields);
+        if (!f || nfields != 2)
+        {
+            puts("ret:0;dst:");
+            if(f)
+                free_fields(f,nfields);
+            return 0;
+        }
+        const char *src = f[0];
+        unsigned long size = uln(f[1]);
+        char *buf = (char*)malloc(size ? size : 1);
+        if (!buf)
+        {
+            free_fields(f,nfields);
+            puts("ret:0;dst:");
+            return 0;
+        }
         if (size) buf[0] = '\0';
         unsigned long ret = (unsigned long)ft_strlcpy(buf, src, (size_t)size);
         printf("ret:%lu;dst:%s\n", ret, buf);
-        free(buf); free_fields(f,nfields); return 0;
+        free(buf);
+        free_fields(f,nfields);
+        return 0;
     }
-    if (strcmp(fn, "ft_strmapi") == 0) {
+    if (strcmp(fn, "ft_strmapi") == 0)
+    {
         char *res = ft_strmapi(arg ? arg : "", map_plus1);
-        if (!res) { puts("(null)"); return 0; }
-        puts(res); free(res); return 0;
+        if (!res)
+        {
+            puts("(null)");
+            return 0;
+        }
+        puts(res);
+        free(res);
+        return 0;
     }
     if (strcmp(fn, "ft_strncmp") == 0) {
         size_t nfields=0; char **f = split_fields(arg,&nfields); /* "S1|S2|N" */
@@ -317,15 +510,30 @@ int main(int argc, char **argv)
         free_fields(f,nfields); return 0;
     }
     if (strcmp(fn, "ft_substr") == 0) {
-        size_t nfields=0; char **f = split_fields(arg,&nfields); /* "STRING|START|LEN" */
-        if (!f || nfields != 3) { puts("(null)"); if(f)free_fields(f,nfields); return 0; }
-        unsigned long start = uln(f[1]), len = uln(f[2]);
+        size_t nfields=0;
+        char **f = split_fields(arg,&nfields);
+        if (!f || nfields != 3)
+        {
+            puts("(null)");
+            if(f)
+                free_fields(f,nfields);
+            return 0;
+        }
+        unsigned long start = uln(f[1]);
+        unsigned long len = uln(f[2]);
         char *res = ft_substr(f[0], (unsigned int)start, (size_t)len);
-        if (!res) puts("(null)"); else { puts(res); free(res); }
-        free_fields(f,nfields); return 0;
+        if (!res)
+            puts("(null)");
+        else
+        {
+            puts(res);
+            free(res);
+        }
+        free_fields(f,nfields);
+        return 0;
     }
     if (strcmp(fn, "ft_tolower") == 0) { int c=(unsigned char)arg[0]; putchar(ft_tolower(c)); putchar('\n'); return 0; }
-    if (strcmp(fn, "ft_toupper") == 0) { int c=(unsigned char)arg[0]; putchar(ft_toupper(c)); putchar('\n'); return 0; }
+    if (strcmp(fn, "ft_toupper") == 0) { int c=parse_char(arg); putchar(ft_toupper(c)); putchar('\n'); return 0; }
 
     fprintf(stderr, "Unknown function: %s\n", fn);
     return 1;
