@@ -1,12 +1,49 @@
 [ft_atoi]
+# --- basic positives and negatives ---
 42|42
--123|-123
+-42|-42
++42|42
 0|0
-999|999
--1|-1
---42|0
-a|0
+-0|0
++0|0
+# --- whitespace handling ---
+"   123"|123
+"\t\n\r\v\f123"|123
+"   -42"| -42
+"\n+42"|42
+" \t \n -00123"| -123
+# --- signs ---
+"--42"|0
+"++42"|0
+"+-42"|0
+"-+42"|0
+# --- boundaries ---
+2147483647|2147483647
+-2147483648|-2147483648
+2147483648| -2147483648
+-2147483649|2147483647
+# --- long numbers (stop at non-digit) ---
+"123abc"|123
+"-123abc"|-123
+"+9999xyz"|9999
+# --- empty / non-digit ---
 ""|0
+" "|0
+"a123"|0
+"--"|0
+"++"|0
+"+"|0
+"-"|0
+# --- leading zeros ---
+"000123"|123
+"-000123"|-123
+# --- extreme spacing ---
+"          42"|42
+"\n\n\n-42"| -42
+# --- big with junk ---
+"9223372036854775807xyz"| -1
+"-9223372036854775808xyz"|0
+
 
 [ft_bzero]
 "abcd,0"|hex:61626364
@@ -104,9 +141,63 @@ a|0
 "Hello"|Hello
 
 [ft_split]
-a,b,c|,|split:a|b|c
-,,a,,b,|,|split:a|b
-|,|split:
+# --- more ft_split tests ---
+abc|,|split:abc
+a,,b,,,c|,|split:a|b|c
+,a,b,c,|,|split:a|b|c
+,|,|split:
+,,,|,|split:
+a|,|split:a
+a,|,|split:a
+,a|,|split:a
+a, ,b,  ,c|,|split:a| |b|  |c
+# dot as separator
+a.b.c|.|split:a|b|c
+.a.b.|.|split:a|b
+....|.|split:
+a.|.|split:a
+|.|split:
+# slash as separator
+path/to/file|/|split:path|to|file
+//a///b////|/|split:a|b
+/leading|/|split:leading
+trailing/|/|split:trailing
+/|/|split:
+# colon as separator
+a::b:c:::|:|split:a|b|c
+::|:|split:
+abc|:|split:abc
+# dash as separator
+a--b---c|-|split:a|b|c
+-a-b-|-|split:a|b
+-| -|split:
+--|-|split:
+# underscore as separator
+___a__|_|split:a
+abc|_|split:abc
+# plus as separator
+++a+b++|+|split:a|b
++++|+|split:
+# equals as separator
+=a==b=|=|split:a|b
+==|=|split:
+# digit as separator
+100200300|0|split:1|2|3
+000|0|split:
+101|0|split:1|1
+# asterisk as separator
+a**b***c|*|split:a|b|c
+***|*|split:
+# delimiter not present
+no_delimiters_here|,|split:no_delimiters_here
+# long / many delimiters
+aaa,,,bbb,,ccc,,,,|,|split:aaa|bbb|ccc
+a,b,,c,,|,|split:a|b|c
+, , ,a, , ,b, ,|,|split: | |a| | |b| 
+single|,|split:single
+end,,|,|split:end
+,,start|,|split:start
+
 
 
 [ft_strchr]
@@ -123,9 +214,40 @@ a,b,c|,|split:a|b|c
 "XYZ"|YZA
 
 [ft_strjoin]
-"hello|world"|helloworld
-"|abc"|abc
-"abc|"|abc
+[ft_strjoin]
+# empty + non-empty
+|a|a
+a||a
+||
+|helloworld|helloworld
+|foobar|foobar
+|abc|abc
+|hello world|hello world
+|leadtrail|leadtrail
+|\t\n|\t\n
+| \t \n\r \f| \t \n\r \f
+
+# symbols / punctuation
+|abc--xyz|abc--xyz
+|abc_xyz123|abc_xyz123
+|[]{}()<>=+|[]{}()<>=+
+|::;;|::;;
+|ABCdef|ABCdef
+
+# longer
+|aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbb|aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbb
+|loremipsumdolorsit amet consectetur|loremipsumdolorsit amet consectetur
+|ab|ab
+|Xlonglonglong|Xlonglonglong
+|longlonglongZ|longlonglongZ
+
+# edge-y empties / small mix
+||
+| | 
+||
+|a|a
+|b|b
+
 
 [ft_strlcat]
 "abc|def|0"|ret:3;dst:

@@ -21,8 +21,23 @@ if [ ! -d "$PROJECT_DIR" ]; then
   exit 1
 fi
 
-# Build project if Makefile exists (silent)
+# Detect if a Makefile exists in the project
+HAVE_MAKEFILE=0
 if [ -f "$PROJECT_DIR/Makefile" ] || [ -f "$PROJECT_DIR/makefile" ] || [ -f "$PROJECT_DIR/GNUmakefile" ]; then
+  HAVE_MAKEFILE=1
+fi
+
+# --- always-run cleanup (even on error/Exit) ---
+cleanup() {
+  if [ "$HAVE_MAKEFILE" = "1" ]; then
+    echo "🧹 Cleaning $PROJECT_DIR (clean)..."
+    make -s -C "$PROJECT_DIR" clean 1>/dev/null || true
+  fi
+}
+trap cleanup EXIT
+
+# Build project if Makefile exists (silent)
+if [ "$HAVE_MAKEFILE" = "1" ]; then
   echo "📂 Found Makefile in $PROJECT_DIR"
   make -s -C "$PROJECT_DIR" 1>/dev/null
 else
