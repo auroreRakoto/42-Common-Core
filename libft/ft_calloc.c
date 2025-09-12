@@ -12,16 +12,14 @@
 
 #include "libft.h"
 
+
 void	*ft_calloc(size_t nmemb, size_t size)
 {
 	void	*tab;
 
 	if (!nmemb || !size)
-	{
-		nmemb = 1;
-		size = 1;
-	}
-	if (nmemb > INT_MAX || size > INT_MAX || nmemb * size > INT_MAX)
+		return (malloc(0));
+	if (nmemb > SIZE_MAX / size)
 		return (NULL);
 	tab = malloc(nmemb * size);
 	if (!tab)
