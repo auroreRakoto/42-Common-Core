@@ -30,8 +30,8 @@ fi
 # --- always-run cleanup (even on error/Exit) ---
 cleanup() {
   if [ "$HAVE_MAKEFILE" = "1" ]; then
-    echo "🧹 Cleaning $PROJECT_DIR (clean)..."
-    make -s -C "$PROJECT_DIR" clean 1>/dev/null || true
+    echo "🧹 Cleaning $PROJECT_DIR (fclean)..."
+    make -s -C "$PROJECT_DIR" fclean 1>/dev/null || true
   fi
 }
 trap cleanup EXIT
@@ -47,14 +47,27 @@ fi
 
 # Build harness in tester via Makefile (silent)
 case "$PROJECT" in
-  libft)      make -s -C "$SCRIPT_DIR" libft_test   1>/dev/null ;;
+  libft)
+      if [ "$2" = "bonus" ]; then
+          make -s -C "$SCRIPT_DIR" bonus 1>/dev/null
+          HARNESS="libft_test_bonus"
+      else
+          make -s -C "$SCRIPT_DIR" libft_test 1>/dev/null
+          HARNESS="libft_test"
+      fi
+      ;;
   printf|ft_printf)
-              make -s -C "$SCRIPT_DIR" printf_test 1>/dev/null ;;
-  get_next_line|gnl)        
-              make -s -C "$SCRIPT_DIR" gnl_tests    1>/dev/null ;;
+      make -s -C "$SCRIPT_DIR" printf_test 1>/dev/null
+      HARNESS="printf_test"
+      ;;
+  get_next_line|gnl)
+      make -s -C "$SCRIPT_DIR" gnl_tests 1>/dev/null
+      HARNESS="gnl_test"
+      ;;
   philo)  : ;;
-  *)          : ;;
+  *)      : ;;
 esac
+
 
 
 # Run Python
@@ -63,4 +76,4 @@ elif command -v python3 >/dev/null 2>&1; then PY=python3
 else PY=python
 fi
 
-"$PY" "$SCRIPT_DIR/main.py" "$PROJECT"
+"$PY" "$SCRIPT_DIR/main.py" "$PROJECT" "$HARNESS"

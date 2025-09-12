@@ -52,6 +52,24 @@
 "abcd,4"|hex:00000000
 ",0"|hex:
 ",1"|hex:
+# longueur exacte / -1 / > len
+"abc,3"|hex:000000
+"abc,999"|hex:000000
+"abcdef,5"|hex:000000000066
+
+# chaînes plus longues
+"hello world,1"|hex:00656c6c6f20776f726c64
+"hello world,6"|hex:000000000000776f726c64
+"hello world,11"|hex:0000000000000000000000
+
+# vide + N variés (déjà partiellement présents)
+",5"|hex:
+",999"|hex:
+
+# caractères répétés
+"zzzzzz,2"|hex:00007a7a7a7a
+"zzzzzz,6"|hex:000000000000
+
 
 [ft_calloc]
 "0,0"|zero
@@ -60,6 +78,29 @@
 "5,0"|zero
 "0,5"|zero
 "100,1"|zero
+# tailles usuelles
+"2,2"|zero
+"10,4"|zero
+"256,16"|zero
+
+# zéros et négatifs (le harness convertit <0 en 0)
+"-1,5"|zero
+"5,-1"|zero
+"-10,-10"|zero
+
+# tailles unitaires / grandes
+"1,1024"|zero
+"1024,1"|zero
+"4096,8"|zero
+
+# cas ambigu 'man' (nmemb==0 ou size==0) -> autorisé: NULL ou ptr libérable ; ton harness s'attend à "zero"
+"0,1024"|zero
+"1024,0"|zero
+
+# très grandes multiplications (peuvent échouer -> "null" selon l'implémentation système)
+"1048576,1048576"|null
+"268435456,16"|null
+
 
 [ft_isalnum]
 "A"|1

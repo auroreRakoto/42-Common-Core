@@ -60,17 +60,17 @@ def log_write(fp: Path, text: str):
 		f.write(text + "\n")
 
 def _truncate_cell(s: str, n: int) -> str:
-    s = "" if s is None else str(s)
-    s = s.replace("\r", "␍").replace("\n", "␤")  # keep rows one-line
-    return s if len(s) <= n else s[: max(0, n - 1)] + "…"
+	s = "" if s is None else str(s)
+	s = s.replace("\r", "␍").replace("\n", "␤")  # keep rows one-line
+	return s if len(s) <= n else s[: max(0, n - 1)] + "…"
 
 # Fixed widths for columns: FUNCTION | INPUT | EXPECTED | GOT | PASS
 COLW = (14, 36, 28, 28, 6)
 
 def format_row(fn: str, inp: str, exp: str, got: str, status: str) -> str:
-    cols = (fn, inp, exp, got, status)
-    cells = [_truncate_cell(c, w) for c, w in zip(cols, COLW)]
-    return " | ".join(c.ljust(w) for c, w in zip(cells, COLW))
+	cols = (fn, inp, exp, got, status)
+	cells = [_truncate_cell(c, w) for c, w in zip(cols, COLW)]
+	return " | ".join(c.ljust(w) for c, w in zip(cells, COLW))
 
 
 
@@ -159,49 +159,46 @@ def run_makefile_tests(project: str):
 
 # ---------- Project tests (libft) ----------
 def run_test(command, expected_outputs):
-    try:
-        fn = ""
-        if isinstance(command, (list, tuple)):
-            argv = list(command)
-            fn = argv[1] if len(argv) > 1 else ""
-            cp = subprocess.run(argv, capture_output=True, text=True, shell=False)
-        else:
-            # string command (older path). We can't reliably extract fn here.
-            cp = subprocess.run(command, capture_output=True, text=True,
-                                shell=(os.name != "nt"))
-        out = cp.stdout or ""
-    except subprocess.CalledProcessError as e:
-        out = (getattr(e, "output", "") or "")
-    except Exception:
-        out = ""
+	try:
+		fn = ""
+		if isinstance(command, (list, tuple)):
+			argv = list(command)
+			fn = argv[1] if len(argv) > 1 else ""
+			cp = subprocess.run(argv, capture_output=True, text=True, shell=False)
+		else:
+			# string command (older path). We can't reliably extract fn here.
+			cp = subprocess.run(command, capture_output=True, text=True,
+								shell=(os.name != "nt"))
+		out = cp.stdout or ""
+	except subprocess.CalledProcessError as e:
+		out = (getattr(e, "output", "") or "")
+	except Exception:
+		out = ""
 
-    # Normalise les fins de ligne Windows -> Unix
-    out = out.replace("\r\n", "\n")
+	# Normalise les fins de ligne Windows -> Unix
+	out = out.replace("\r\n", "\n")
 
-    # Pour ft_put* on garde EXACTEMENT les newlines ; sinon on trim
-    # (Quand command est une liste argv, on connaît fn ; sinon on trim par défaut)
-    if not (isinstance(command, (list, tuple)) and fn.startswith("ft_put")):
-        out = out.strip()
+	# Pour ft_put* on garde EXACTEMENT les newlines ; sinon on trim
+	# (Quand command est une liste argv, on connaît fn ; sinon on trim par défaut)
+	if not (isinstance(command, (list, tuple)) and fn.startswith("ft_put")):
+		out = out.strip()
 
-    result = out
+	result = out
 
-    passed = 0
-    glyphs = []
-    for expected in expected_outputs:
-        expected_list = expected.split('|')
-        result_list   = result.split('|')
-        if result_list == expected_list:
-            passed += 1
-            glyphs.append(GREEN + "✅" + RESET)
-        else:
-            glyphs.append(RED + "❌" + RESET)
-    return passed, len(expected_outputs), "".join(glyphs), result
-
-
+	passed = 0
+	glyphs = []
+	for expected in expected_outputs:
+		expected_list = expected.split('|')
+		result_list   = result.split('|')
+		if result_list == expected_list:
+			passed += 1
+			glyphs.append(GREEN + "✅" + RESET)
+		else:
+			glyphs.append(RED + "❌" + RESET)
+	return passed, len(expected_outputs), "".join(glyphs), result
 
 
-
-def load_libft_tests(filename="data/libft_data.txt"):
+def load_libft_tests(filename="data/libft_data.txt", exe_path: Path | None = None):
 	tests = []
 	current_fn = None
 	data_file = (ROOT / filename).resolve()
@@ -212,8 +209,7 @@ def load_libft_tests(filename="data/libft_data.txt"):
 
 	# Absolute path to the harness (works from anywhere)
 	exe_path = ROOT / ("libft_test.exe" if os.name == "nt" else "libft_test")
-	exe = str(exe_path)  # no quotes here; pass as argv[0]
-	#exe = f'"{str(exe_path)}"'  # quote for spaces in path
+	exe = str(exe_path)
 
 	for raw in data_file.read_text(encoding="utf-8").splitlines():
 		line = raw.strip()
@@ -240,7 +236,7 @@ def load_libft_tests(filename="data/libft_data.txt"):
 				tests.append((current_fn, cmd, [expected]))
 				continue
 			
-			# ---- NEW: ft_strjoin special-case ----
+			# ---- : ft_strjoin special-case ----
 			if current_fn == "ft_strjoin":
 				parts = line.split("|")
 				if len(parts) < 3:
@@ -255,6 +251,23 @@ def load_libft_tests(filename="data/libft_data.txt"):
 				input_str = f"{s1}|{s2}"
 				tests.append((current_fn, [exe, current_fn, input_str], [expected]))
 				continue
+
+			# ---- : ft_put* pass as argv list so we don't strip newlines ----
+			if current_fn in ("ft_putendl_fd", "ft_putstr_fd", "ft_putnbr_fd", "ft_putchar_fd"):
+				if "|" not in line:
+					continue
+				input_str, expected_raw = [part.strip() for part in line.rsplit("|", 1)]
+				expected = bytes(expected_raw, "utf-8").decode("unicode_escape")
+
+				# enlève des guillemets d'encadrement si présents ("Hello" -> Hello)
+				if input_str.startswith('"') and input_str.endswith('"'):
+					input_str = input_str[1:-1]
+
+				# IMPORTANT: passe une LISTE argv pour que run_test détecte ft_put*
+				cmd = [exe, current_fn, input_str]
+				tests.append((current_fn, cmd, [expected]))
+				continue
+
 
 			# --- default path (unchanged) ---
 			if "|" not in line:
@@ -335,7 +348,7 @@ def _gnl_collect_lines(output: str, tag="L"):
 
 
 
-def run_project_tests(project: str):
+def run_project_tests(project: str, harness: str | None = None):
 	total_passed = 0
 	total_tests  = 0
 
@@ -345,9 +358,11 @@ def run_project_tests(project: str):
 	log_write(log_path, format_row("FUNCTION", "INPUT", "EXPECTED", "GOT", "PASS"))
 	log_write(log_path, format_row("-"*8, "-"*5, "-"*8, "-"*3, "----"))
 
+	exe_name = harness or (project + "_test")
+	exe_path = ROOT / (exe_name + (".exe" if os.name == "nt" else ""))
 
 	if project == "libft":
-		test_list = load_libft_tests("data/libft_data.txt")
+		test_list = load_libft_tests("data/libft_data.txt", exe_path=exe_path)
 		grouped = {}
 		for name, cmd, expected in test_list:
 			grouped.setdefault(name, []).append((cmd, expected))
@@ -358,10 +373,7 @@ def run_project_tests(project: str):
 			glyphs = []
 
 			for cmd, expected in cases:
-				# extract INPUT for the log (last token after function name)
-				# Example cmd: "C:\...\libft_test.exe ft_strlen \"Hello\""
 				try:
-					# naive, but good enough: input is last token; strip quotes
 					input_arg = cmd.rsplit(" ", 1)[-1].strip()
 					if input_arg.startswith('"') and input_arg.endswith('"'):
 						input_arg = input_arg[1:-1]
@@ -373,7 +385,6 @@ def run_project_tests(project: str):
 				line_total  += t
 				glyphs.append(trace)
 
-				# write one detailed line into the log
 				pass_flag = "PASS" if p == t else "FAIL"
 				log_write(log_path, format_row(name, input_arg, expected[0], got, pass_flag))
 
@@ -446,9 +457,6 @@ def run_project_tests(project: str):
 			total_tests += 1
 			if ok: total_passed += 1
 
-
-
-
 	return total_passed, total_tests
 
 
@@ -457,8 +465,8 @@ def main():
 	if len(sys.argv) < 2:
 		print("Usage: main.py [libft|philo|gnl]")
 		return
-
 	project = sys.argv[1]
+	harness = sys.argv[2] if len(sys.argv) > 2 else None
 
 	banner(f"STARTING PRE TESTS for {project.upper()}")
 
@@ -478,7 +486,7 @@ def main():
 	#    sys.exit(1)
 
 	banner(f"STARTING TESTS for {project.upper()}")
-	p_ok, p_total = run_project_tests(project)
+	p_ok, p_total = run_project_tests(project, harness)
 	banner("📊 RESULT SUMMARY")
 	print(f"Passed: {GREEN}{p_ok}{RESET}/{p_total}")
 	# after printing final summary
