@@ -7,6 +7,8 @@ import subprocess
 import datetime
 import shlex
 from pathlib import Path
+from libft.libft import load_libft_tests, run_libft_test
+from ft_printf import load_printf_tests
 
 # --- console encoding + glyphs fallback ---
 def _choose_glyphs():
@@ -157,169 +159,6 @@ def run_makefile_tests(project: str):
 
 	return ok, total
 
-# ---------- Project tests (libft) ----------
-def run_test(command, expected_outputs):
-	try:
-		fn = ""
-		if isinstance(command, (list, tuple)):
-			argv = list(command)
-			fn = argv[1] if len(argv) > 1 else ""
-			cp = subprocess.run(argv, capture_output=True, text=True, shell=False)
-		else:
-			# string command (older path). We can't reliably extract fn here.
-			cp = subprocess.run(command, capture_output=True, text=True,
-								shell=(os.name != "nt"))
-		out = cp.stdout or ""
-	except subprocess.CalledProcessError as e:
-		out = (getattr(e, "output", "") or "")
-	except Exception:
-		out = ""
-
-	# Normalise les fins de ligne Windows -> Unix
-	out = out.replace("\r\n", "\n")
-
-	# Pour ft_put* on garde EXACTEMENT les newlines ; sinon on trim
-	# (Quand command est une liste argv, on connaît fn ; sinon on trim par défaut)
-	if not (isinstance(command, (list, tuple)) and fn.startswith("ft_put")):
-		out = out.strip()
-
-	result = out
-
-	passed = 0
-	glyphs = []
-	for expected in expected_outputs:
-		expected_list = expected.split('|')
-		result_list   = result.split('|')
-		if result_list == expected_list:
-			passed += 1
-			glyphs.append(GREEN + "✅" + RESET)
-		else:
-			glyphs.append(RED + "❌" + RESET)
-	return passed, len(expected_outputs), "".join(glyphs), result
-
-
-def load_libft_tests(filename="data/libft_data.txt", exe_path: Path | None = None):
-	tests = []
-	current_fn = None
-	data_file = (ROOT / filename).resolve()
-
-	if not data_file.exists():
-		print(f"{RED}❌ Test data file not found: {data_file}{RESET}")
-		return tests
-
-	# Absolute path to the harness (works from anywhere)
-	exe_path = ROOT / ("libft_test.exe" if os.name == "nt" else "libft_test")
-	exe = str(exe_path)
-
-	for raw in data_file.read_text(encoding="utf-8").splitlines():
-		line = raw.strip()
-		if not line or line.startswith("#"):
-			continue
-
-		# section header: [ft_atoi], [ft_strlen], ...
-		if line.startswith("[") and line.endswith("]"):
-			current_fn = line[1:-1].strip()
-			continue
-
-		if current_fn:
-			# --- SPECIAL CASE: ft_split has '|' inside the expected output ---
-			if current_fn == "ft_split":
-				parts = line.split("|")
-				if len(parts) < 3:
-					continue
-				s, sep = parts[0].strip(), parts[1].strip()
-				expected_raw = "|".join(parts[2:]).strip()
-				expected = bytes(expected_raw, "utf-8").decode("unicode_escape")
-
-				input_str = f"{s}|{sep}"  # what your C harness expects
-				cmd = [exe, current_fn, input_str]   # <— LIST, not a string
-				tests.append((current_fn, cmd, [expected]))
-				continue
-			
-			# ---- : ft_strjoin special-case ----
-			if current_fn == "ft_strjoin":
-				parts = line.split("|")
-				if len(parts) < 3:
-					continue
-				s1, s2 = parts[0].strip(), parts[1].strip()
-				# strip outer quotes on each side if present (keep raw backslashes inside)
-				if s1.startswith('"') and s1.endswith('"'): s1 = s1[1:-1]
-				if s2.startswith('"') and s2.endswith('"'): s2 = s2[1:-1]
-				# expected MUST remain literal (do NOT unicode-escape), because
-				# the harness prints visible escapes like "\t\n" now.
-				expected = "|".join(parts[2:]).strip()
-				input_str = f"{s1}|{s2}"
-				tests.append((current_fn, [exe, current_fn, input_str], [expected]))
-				continue
-
-			# ---- : ft_put* pass as argv list so we don't strip newlines ----
-			if current_fn in ("ft_putendl_fd", "ft_putstr_fd", "ft_putnbr_fd", "ft_putchar_fd"):
-				if "|" not in line:
-					continue
-				input_str, expected_raw = [part.strip() for part in line.rsplit("|", 1)]
-				expected = bytes(expected_raw, "utf-8").decode("unicode_escape")
-
-				# enlève des guillemets d'encadrement si présents ("Hello" -> Hello)
-				if input_str.startswith('"') and input_str.endswith('"'):
-					input_str = input_str[1:-1]
-
-				# IMPORTANT: passe une LISTE argv pour que run_test détecte ft_put*
-				cmd = [exe, current_fn, input_str]
-				tests.append((current_fn, cmd, [expected]))
-				continue
-
-
-			# --- default path (unchanged) ---
-			if "|" not in line:
-				continue
-			input_str, expected_raw = [part.strip() for part in line.rsplit("|", 1)]
-			expected = bytes(expected_raw, "utf-8").decode("unicode_escape")
-
-			if input_str.startswith('"') and input_str.endswith('"'):
-				arg = input_str
-			else:
-				arg = shlex.quote(input_str)
-
-			cmd = f'{exe} {current_fn} {arg}'
-			tests.append((current_fn, cmd, [expected]))
-
-	return tests
-
-def load_printf_tests(filename="data/printf_data.txt"):
-	tests = []
-	data_file = (ROOT / filename).resolve()
-
-	exe_path = ROOT / ("printf_test.exe" if os.name == "nt" else "printf_test")
-	if not exe_path.exists():
-		print(f"{RED}❌ printf test harness not found at {exe_path}. Build failed?{RESET}")
-		return tests
-
-	exe = f'"{str(exe_path)}"'
-	current_fn = None
-
-	for raw in data_file.read_text(encoding="utf-8").splitlines():
-		line = raw.strip()
-		if not line or line.startswith("#"):
-			continue
-		if line.startswith("[") and line.endswith("]"):
-			current_fn = line[1:-1].strip()
-			continue
-
-		if current_fn:
-			parts = line.split("|")
-			if len(parts) < 2:
-				continue
-			fmt = parts[0]
-			args = parts[1:-1]
-			expected = parts[-1]
-			# build command
-			fmt_clean = fmt.strip('"')
-			cmd = f'{exe} "{fmt_clean}"'
-			for a in args:
-				cmd += f' "{a}"'
-			tests.append((current_fn, cmd, [expected]))
-	return tests
-
 # ---- GNL fixtures & parsing ----
 def _gnl_make_fixtures(root: Path) -> dict:
 	fx = {}
@@ -347,7 +186,6 @@ def _gnl_collect_lines(output: str, tag="L"):
 	return lines
 
 
-
 def run_project_tests(project: str, harness: str | None = None):
 	total_passed = 0
 	total_tests  = 0
@@ -358,11 +196,14 @@ def run_project_tests(project: str, harness: str | None = None):
 	log_write(log_path, format_row("FUNCTION", "INPUT", "EXPECTED", "GOT", "PASS"))
 	log_write(log_path, format_row("-"*8, "-"*5, "-"*8, "-"*3, "----"))
 
-	exe_name = harness or (project + "_test")
+	exe_name = ("libft/" + harness) or ("libft/" + project + "_test")
 	exe_path = ROOT / (exe_name + (".exe" if os.name == "nt" else ""))
 
 	if project == "libft":
-		test_list = load_libft_tests("data/libft_data.txt", exe_path=exe_path)
+		is_bonus = exe_path.name.startswith("libft_test_bonus")
+		
+		data_file = "../data/libft_bonus_data.txt" if is_bonus else "../data/libft_data.txt"
+		test_list = load_libft_tests(data_file, exe_path=exe_path)
 		grouped = {}
 		for name, cmd, expected in test_list:
 			grouped.setdefault(name, []).append((cmd, expected))
@@ -373,14 +214,14 @@ def run_project_tests(project: str, harness: str | None = None):
 			glyphs = []
 
 			for cmd, expected in cases:
-				try:
+				if isinstance(cmd, list):
+					input_arg = cmd[-1]
+				else:
 					input_arg = cmd.rsplit(" ", 1)[-1].strip()
 					if input_arg.startswith('"') and input_arg.endswith('"'):
-						input_arg = input_arg[1:-1]
-				except Exception:
-					input_arg = ""
+					    input_arg = input_arg[1:-1]
 
-				p, t, trace, got = run_test(cmd, expected)
+				p, t, trace, got = run_libft_test(cmd, expected)
 				line_passed += p
 				line_total  += t
 				glyphs.append(trace)
@@ -406,7 +247,7 @@ def run_project_tests(project: str, harness: str | None = None):
 		for name, cases in grouped.items():
 			line_passed = 0; line_total = 0; glyphs = []
 			for cmd, expected in cases:
-				p, t, trace, got = run_test(cmd, expected)
+				p, t, trace, got = run_libft_test(cmd, expected)
 				line_passed += p; line_total += t; glyphs.append(trace)
 				log_write(log_path, f"{name} | {expected[0]} | {got} | {'PASS' if p==t else 'FAIL'}")
 			print(f"{name} : {''.join(glyphs)}")
@@ -426,7 +267,7 @@ def run_project_tests(project: str, harness: str | None = None):
 			for name, (path, content) in fixtures.items():
 				# run in "file" mode
 				cmd = f'"{tester_bin_dir / b}" file "{path}"'
-				p, t, trace, got = run_test(cmd, expected_outputs=["<ignore>"])  # we'll compute verdict ourselves
+				p, t, trace, got = run_libft_test(cmd, expected_outputs=["<ignore>"])  # we'll compute verdict ourselves
 				got_lines = _gnl_collect_lines(got, tag="L")
 				reconstructed = "\n".join(got_lines)
 				# If original file ended with '\n', add it back for full equality
@@ -445,7 +286,7 @@ def run_project_tests(project: str, harness: str | None = None):
 			p1, c1 = fixtures["multi.txt"]
 			p2, c2 = fixtures["no_newline.txt"]
 			cmd = f'"{tester_bin_dir / b}" multifile "{p1}" "{p2}"'
-			p, t, trace, got = run_test(cmd, expected_outputs=["<ignore>"])
+			p, t, trace, got = run_libft_test(cmd, expected_outputs=["<ignore>"])
 			got1 = "\n".join(_gnl_collect_lines(got, tag="1"))
 			got2 = "\n".join(_gnl_collect_lines(got, tag="2"))
 			ok1 = (got1 + "\n" == c1)   # multi.txt ends with '\n'

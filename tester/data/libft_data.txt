@@ -269,33 +269,29 @@ end,,|,|split:end
 "XYZ"|YZA
 
 [ft_strjoin]
-[ft_strjoin]
 # empty + non-empty
-|a|a
+a|a|aa
 a||a
 ||
-|helloworld|helloworld
+hello|world|helloworld
 |foobar|foobar
 |abc|abc
 |hello world|hello world
 |leadtrail|leadtrail
 |\t\n|\t\n
 | \t \n\r \f| \t \n\r \f
-
 # symbols / punctuation
 |abc--xyz|abc--xyz
 |abc_xyz123|abc_xyz123
 |[]{}()<>=+|[]{}()<>=+
 |::;;|::;;
 |ABCdef|ABCdef
-
 # longer
 |aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbb|aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbb
 |loremipsumdolorsit amet consectetur|loremipsumdolorsit amet consectetur
 |ab|ab
 |Xlonglonglong|Xlonglonglong
 |longlonglongZ|longlonglongZ
-
 # edge-y empties / small mix
 ||
 | | 

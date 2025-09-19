@@ -60,7 +60,7 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	ar rcs $(NAME) $(OBJS)
 	
-%.o: %.c
+$(OBJS): %.o: %.c
 	$(CC) $(FLAGS) -c $< -o $@
 
 clean:
@@ -72,9 +72,13 @@ fclean: clean
 re: fclean all
 
 bonus: $(OBJS) $(BONUS_OBJS)
+	echo -e "\n"
+	@echo $(BONUS_OBJS)
+	echo -e "\n"
 	ar rcs $(NAME) $(OBJS) $(BONUS_OBJS)
 
-$(BONUS_OBJS): $(BONUS_SRCS)
-	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BONUS_OBJS): %.o: %.c
+	$(CC) $(FLAGS) -c $< -o $@
 
 .PHONY: all clean fclean re

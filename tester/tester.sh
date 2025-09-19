@@ -32,6 +32,7 @@ cleanup() {
   if [ "$HAVE_MAKEFILE" = "1" ]; then
     echo "🧹 Cleaning $PROJECT_DIR (fclean)..."
     make -s -C "$PROJECT_DIR" fclean 1>/dev/null || true
+    make -s -C "$SCRIPT_DIR" fclean 1>/dev/null || true
   fi
 }
 trap cleanup EXIT
@@ -39,7 +40,11 @@ trap cleanup EXIT
 # Build project if Makefile exists (silent)
 if [ "$HAVE_MAKEFILE" = "1" ]; then
   echo "📂 Found Makefile in $PROJECT_DIR"
-  make -s -C "$PROJECT_DIR" 1>/dev/null
+  if [ "$2" = "bonus" ]; then
+    make bonus -s -C "$PROJECT_DIR" 1>/dev/null
+  else
+    make -s -C "$PROJECT_DIR" 1>/dev/null
+  fi
 else
   echo "⚠️  No Makefile found in $PROJECT_DIR"
 fi
@@ -49,7 +54,7 @@ fi
 case "$PROJECT" in
   libft)
       if [ "$2" = "bonus" ]; then
-          make -s -C "$SCRIPT_DIR" bonus 1>/dev/null
+          make -s -C "$SCRIPT_DIR" libft_test_bonus 1>/dev/null
           HARNESS="libft_test_bonus"
       else
           make -s -C "$SCRIPT_DIR" libft_test 1>/dev/null
@@ -57,11 +62,11 @@ case "$PROJECT" in
       fi
       ;;
   printf|ft_printf)
-      make -s -C "$SCRIPT_DIR" printf_test 1>/dev/null
+      #make -s -C "$SCRIPT_DIR" printf_test 1>/dev/null
       HARNESS="printf_test"
       ;;
   get_next_line|gnl)
-      make -s -C "$SCRIPT_DIR" gnl_tests 1>/dev/null
+      #make -s -C "$SCRIPT_DIR" gnl_tests 1>/dev/null
       HARNESS="gnl_test"
       ;;
   philo)  : ;;
@@ -75,5 +80,7 @@ if command -v py >/dev/null 2>&1; then PY=py
 elif command -v python3 >/dev/null 2>&1; then PY=python3
 else PY=python
 fi
+
+echo $HARNESS
 
 "$PY" "$SCRIPT_DIR/main.py" "$PROJECT" "$HARNESS"

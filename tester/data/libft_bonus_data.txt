@@ -1,0 +1,59 @@
+[ft_lstnew_bonus]
+"abc"|list:abc
+""|list:
+"Hello, World!"|list:Hello, World!
+"123"|list:123
+"A a"|list:A a
+
+[ft_lstsize_bonus]
+"a,b,c"|size:3
+""|size:0
+"a"|size:1
+"one,two,three,four,five"|size:5
+" , , "|size:3
+
+[ft_lstlast_bonus]
+"a,b,c"|last:c
+""|last:
+"solo"|last:solo
+"first,second"|last:second
+"  lead,trail  "|last:trail  
+
+[ft_lstadd_front_bonus]
+a,b|X|list:X|a|b
+""|X|list:X
+a|""|list:|a
+a,b,c|front|list:front|a|b|c
+"  hello,world  "|"  Z  "|list:  Z  |  hello|world  
+
+[ft_lstadd_back_bonus]
+a,b|X|list:a|b|X
+""|X|list:X
+a|""|list:a|
+a,b,c|back|list:a|b|c|back
+"  hello,world  "|"  Z  "|list:  hello|world  |  Z  
+
+[ft_lstdelone_bonus]
+"foo"|freed:1
+""|freed:1
+"any string here"|freed:1
+
+[ft_lstclear_bonus]
+"a,b,c"|freed:3
+""|freed:0
+"one"|freed:1
+"one,two,three,four"|freed:4
+
+[ft_lstiter_bonus]
+"a,b"|list:A|B
+"abc,def,ghi"|list:ABC|DEF|GHI
+""|list:
+"x"|list:X
+"MiXeD,Case,123!"|list:MIXED|CASE|123!
+
+[ft_lstmap_bonus]
+"a,b"|list:A|B
+"abc,def,ghi"|list:ABC|DEF|GHI
+""|list:
+"x"|list:X
+"MiXeD,Case,123!"|list:MIXED|CASE|123!

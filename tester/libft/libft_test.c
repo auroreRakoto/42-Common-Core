@@ -181,9 +181,6 @@ static void print_visible(const char *s) {
     }
 }
 
-
-
-
 /* ---------- dispatcher ---------- */
 /*
  * Conventions (match your libft_data.txt lines):

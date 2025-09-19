@@ -1,34 +1,53 @@
-#include "libft.h"
+#include "../libft/libft.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 // Helpers déjà proposés
-static t_list *list_from_csv(const char *csv) {
-    if (!csv || !*csv) return NULL;
-    t_list *head = NULL, *tail = NULL;
+
+static t_list *list_from_csv(const char *csv)
+{
+    if (!csv || !*csv)
+        return (NULL);
+    t_list *head = NULL;
+    t_list *tail = NULL;
     const char *p = csv, *q;
-    while (1) {
+    while (1)
+    {
         q = strchr(p, ',');
         size_t len = q ? (size_t)(q - p) : strlen(p);
         char *dup = (char *)malloc(len + 1);
         memcpy(dup, p, len);
         dup[len] = '\0';
         t_list *node = ft_lstnew(dup);
-        if (!node) { free(dup); ft_lstclear(&head, free); return NULL; }
-        if (!head) head = tail = node;
-        else { tail->next = node; tail = node; }
-        if (!q) break;
+        if (!node)
+        {
+            free(dup);
+            ft_lstclear(&head, free);
+            return (NULL);
+        }
+        if (!head)
+            head = tail = node;
+        else
+        {
+            tail->next = node;
+            tail = node;
+        }
+        if (!q)
+            break;
         p = q + 1;
     }
-    return head;
+    return (head);
 }
 
-static void list_print(const char *prefix, t_list *lst) {
+static void list_print(const char *prefix, t_list *lst)
+{
     fputs(prefix, stdout);
-    for (size_t i = 0; lst; lst = lst->next, ++i) {
-        if (i) putchar('|');
+    for (size_t i = 0; lst; lst = lst->next, ++i)
+    {
+        if (i)
+            putchar('|');
         fputs((char*)lst->content, stdout);
     }
     putchar('\n');
@@ -57,22 +76,68 @@ static char *my_strndup(const char *s, size_t n) {
     return p;
 }
 
+// remove one pair of surrounding double quotes if present
+static char *strip_outer_quotes(const char *s)
+{
+    size_t n = strlen(s);
+    if (n >= 2 && s[0] == '"' && s[n - 1] == '"')
+    {
+        return my_strndup(s + 1, n - 2); // allocates n-1 bytes incl. '\0'
+    }
+    return strdup(s); // make a writable owned copy
+}
+/*
+static char **split_fields(const char *s, size_t *outc) {
+	size_t cap = 8, n = 0;
+	char **arr = (char**)malloc(cap * sizeof(char*));
+	if (!arr) return NULL;
+	const char *p = s, *q;
+	while (1) {
+		q = strchr(p, '|');
+		size_t len = q ? (size_t)(q - p) : strlen(p);
+		char *field = (char*)malloc(len + 1);
+		if (!field) { for (size_t i=0;i<n;i++) free(arr[i]); free(arr); return NULL; }
+		if (len) memcpy(field, p, len);
+		field[len] = '\0';
+		if (n == cap) {
+			cap *= 2;
+			char **tmp = (char**)realloc(arr, cap * sizeof(char*));
+			if (!tmp) { for (size_t i=0;i<n;i++) free(arr[i]); free(arr); free(field); return NULL; }
+			arr = tmp;
+		}
+		arr[n++] = field;
+		if (!q) break;
+		p = q + 1;
+	}
+	*outc = n;
+	return arr;
+}
+
+static void free_fields(char **a, size_t n){ for(size_t i=0;i<n;i++) free(a[i]); free(a); }
+*/
+
 // Main dispatcher
 int main(int argc, char **argv) {
-    if (argc < 2) { puts("usage: libft_test_bonus FUNCTION [ARGS]"); return 0; }
+    if (argc < 2)
+    {
+        puts("usage: libft_test_bonus FUNCTION [ARGS]");
+        return 0;
+    }
     const char *fn = argv[1];
-    const char *arg = (argc > 2 ? argv[2] : "");
+    char *arg = strip_outer_quotes((argc > 2 ? argv[2] : ""));
 
     if (strcmp(fn, "ft_lstnew_bonus") == 0) {
         t_list *n = ft_lstnew(strdup(arg));
         list_print("list:", n);
         free(n->content); free(n);
+        free(arg);
         return 0;
     }
     if (strcmp(fn, "ft_lstsize_bonus") == 0) {
         t_list *lst = list_from_csv(arg);
         printf("size:%d\n", ft_lstsize(lst));
         ft_lstclear(&lst, del_str);
+        free(arg);
         return 0;
     }
     if (strcmp(fn, "ft_lstlast_bonus") == 0) {
@@ -80,11 +145,12 @@ int main(int argc, char **argv) {
         t_list *last = ft_lstlast(lst);
         printf("last:%s\n", last ? (char*)last->content : "");
         ft_lstclear(&lst, del_str);
+        free(arg);
         return 0;
     }
     if (strcmp(fn, "ft_lstadd_front_bonus") == 0) {
         char *sep = strrchr(arg, '|');
-        if (!sep) { puts("list:"); return 0; }
+        if (!sep) { puts("list:"); free(arg); return 0; }
         char *left = my_strndup(arg, (size_t)(sep - arg));
         char *front = strdup(sep + 1);
         t_list *lst = list_from_csv(left);
@@ -93,11 +159,12 @@ int main(int argc, char **argv) {
         list_print("list:", lst);
         ft_lstclear(&lst, del_str);
         free(left);
+        free(arg);
         return 0;
     }
     if (strcmp(fn, "ft_lstadd_back_bonus") == 0) {
         char *sep = strrchr(arg, '|');
-        if (!sep) { puts("list:"); return 0; }
+        if (!sep) { puts("list:"); free(arg); return 0; }
         char *left = my_strndup(arg, (size_t)(sep - arg));
         char *back = strdup(sep + 1);
         t_list *lst = list_from_csv(left);
@@ -106,6 +173,7 @@ int main(int argc, char **argv) {
         list_print("list:", lst);
         ft_lstclear(&lst, del_str);
         free(left);
+        free(arg);
         return 0;
     }
     if (strcmp(fn, "ft_lstdelone_bonus") == 0)
@@ -113,6 +181,7 @@ int main(int argc, char **argv) {
         t_list *n = ft_lstnew(strdup(arg));
         ft_lstdelone(n, free);
         puts("freed:1");
+        free(arg);
         return 0;
     }
     if (strcmp(fn, "ft_lstclear_bonus") == 0) {
@@ -120,6 +189,7 @@ int main(int argc, char **argv) {
         int before = ft_lstsize(lst);
         ft_lstclear(&lst, del_str);
         printf("freed:%d\n", before);
+        free(arg);
         return 0;
     }
     if (strcmp(fn, "ft_lstiter_bonus") == 0) {
@@ -127,17 +197,48 @@ int main(int argc, char **argv) {
         ft_lstiter(lst, iter_upper);
         list_print("list:", lst);
         ft_lstclear(&lst, del_str);
+        free(arg);
         return 0;
     }
-    if (strcmp(fn, "ft_lstmap_bonus") == 0) {
+    if (strcmp(fn, "ft_lstmap_bonus") == 0)
+    {
         t_list *lst = list_from_csv(arg);
         t_list *newlst = ft_lstmap(lst, dup_upper, del_str);
         list_print("list:", newlst);
         ft_lstclear(&lst, del_str);
         ft_lstclear(&newlst, del_str);
+        free(arg);
         return 0;
     }
+	/*
+    if (strcmp(fn, "ft_split") == 0)
+	{
+		size_t nfields=0;
+		char **f = split_fields(arg,&nfields);
+		if (!f || nfields != 2)
+		{
+			puts("list:");
+			if(f)
+				free_fields(f,nfields);
+			return 0;
+		}
+		char **arr = ft_split(f[0], (unsigned char)f[1][0]);
+		fputs("split:", stdout);
+		if (arr)
+		{
+			for (size_t i=0; arr[i]; ++i)
+			{
+				if (i)
+					putchar('|');
+				fputs(arr[i], stdout);
+				free(arr[i]);
+			}
+			free(arr);
+		}
+		putchar('\n'); free_fields(f,nfields); return 0;
+	}*/
 
-    puts("unknown fn");
-    return 0;
+	puts("unknown fn");
+	free(arg);
+	return 0;
 }

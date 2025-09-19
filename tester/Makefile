@@ -14,35 +14,32 @@ LIBFT_DIR               := ../libft
 LIBFT_A                 := $(LIBFT_DIR)/libft.a
 CPPFLAGS                += -I$(LIBFT_DIR)
 
-LIBFT_TEST              := libft_test$(EXE)
-LIBFT_TEST_SRCS         := libft_test.c
+LIBFT_TEST              := libft/libft_test$(EXE)
+LIBFT_TEST_SRCS         := libft/libft_test.c
 LIBFT_TEST_OBJS         := $(LIBFT_TEST_SRCS:.c=.o)
 
-LIBFT_TEST_BONUS        := libft_test_bonus$(EXE)
-LIBFT_TEST_BONUS_SRCS   := libft_test_bonus.c
+LIBFT_TEST_BONUS        := libft/libft_test_bonus$(EXE)
+LIBFT_TEST_BONUS_SRCS   := libft/libft_test_bonus.c
 LIBFT_TEST_BONUS_OBJS   := $(LIBFT_TEST_BONUS_SRCS:.c=.o)
-
-.PHONY: all bonus libft_bonus libft_test
 
 all: $(LIBFT_TEST)
 
 $(LIBFT_TEST): $(LIBFT_TEST_OBJS) $(LIBFT_A)
 	$(CC) $(CFLAGS) -o $@ $(LIBFT_TEST_OBJS) $(LIBFT_A)
 
-# --- build libft with bonus objects before linking the bonus harness ---
-bonus: libft_bonus $(LIBFT_TEST_BONUS)
-
-libft_bonus:
-	$(MAKE) -C $(LIBFT_DIR) bonus
-
-$(LIBFT_TEST_BONUS): $(LIBFT_TEST_BONUS_OBJS) $(LIBFT_A)
-	$(CC) $(CFLAGS) -o $@ $(LIBFT_TEST_BONUS_OBJS) $(LIBFT_A)
-
-# fallback for non-bonus targets that still need libft
 $(LIBFT_A):
 	$(MAKE) -C $(LIBFT_DIR)
 
 libft_test: $(LIBFT_TEST)
+
+$(LIBFT_TEST_BONUS): $(LIBFT_TEST_BONUS_OBJS) $(LIBFT_A)_bonus
+	$(CC) $(CFLAGS) -o $@ $(LIBFT_TEST_BONUS_OBJS) $(LIBFT_A)
+
+$(LIBFT_A)_bonus:
+	$(MAKE) bonus -C $(LIBFT_DIR)
+
+
+libft_test_bonus: $(LIBFT_TEST_BONUS)
 
 
 
@@ -84,11 +81,11 @@ gnl_clean:
 	$(RM) gnl_test_bs_1$(EXE) gnl_test_bs_32$(EXE) gnl_test_bs_9999$(EXE)
 
 clean:
-	$(RM) $(LIBFT_TEST_OBJS) $(PRINTF_TEST_OBJS)
+	$(RM) $(LIBFT_TEST_OBJS) $(LIBFT_TEST_BONUS_OBJS) $(PRINTF_TEST_OBJS)
 
 fclean: clean
-	$(RM) $(LIBFT_TEST) $(PRINTF_TEST)
+	$(RM) $(LIBFT_TEST) $(LIBFT_TEST_BONUS) $(PRINTF_TEST)
 
 re: fclean all
 
-.PHONY: all clean fclean re libft_test printf_test gnl_tests gnl_clean
+.PHONY: all clean fclean re libft_test libft_test_bonus printf_test gnl_tests gnl_clean
