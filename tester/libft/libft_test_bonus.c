@@ -1,4 +1,4 @@
-#include "../libft/libft.h"
+#include "libft.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,35 +86,6 @@ static char *strip_outer_quotes(const char *s)
     }
     return strdup(s); // make a writable owned copy
 }
-/*
-static char **split_fields(const char *s, size_t *outc) {
-	size_t cap = 8, n = 0;
-	char **arr = (char**)malloc(cap * sizeof(char*));
-	if (!arr) return NULL;
-	const char *p = s, *q;
-	while (1) {
-		q = strchr(p, '|');
-		size_t len = q ? (size_t)(q - p) : strlen(p);
-		char *field = (char*)malloc(len + 1);
-		if (!field) { for (size_t i=0;i<n;i++) free(arr[i]); free(arr); return NULL; }
-		if (len) memcpy(field, p, len);
-		field[len] = '\0';
-		if (n == cap) {
-			cap *= 2;
-			char **tmp = (char**)realloc(arr, cap * sizeof(char*));
-			if (!tmp) { for (size_t i=0;i<n;i++) free(arr[i]); free(arr); free(field); return NULL; }
-			arr = tmp;
-		}
-		arr[n++] = field;
-		if (!q) break;
-		p = q + 1;
-	}
-	*outc = n;
-	return arr;
-}
-
-static void free_fields(char **a, size_t n){ for(size_t i=0;i<n;i++) free(a[i]); free(a); }
-*/
 
 // Main dispatcher
 int main(int argc, char **argv) {

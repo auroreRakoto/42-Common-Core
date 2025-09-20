@@ -1,9 +1,39 @@
 [ft_printf]
-"Hello"|Hello
-"Hello %s|World"|Hello World
-"Value: %d|42"|Value: 42
-"Char: %c|A"|Char: A
-"Mix %s %d|Test|123"|Mix Test 123
-"Ptr %p|X"|Ptr 0x
-"Hex %x|2a"|Hex 2a
-"Pct %% OK"|Pct % OK
+# --- simple sanity ---
+"Hello %s %d"|World|42|Hello World 42
+"%s %s %s"|a|b|c|a b c
+"%c-%c-%%"|A|B|A-B-%
+"%d %i %u"|123|-45|67|123 -45 67
+"%x %X"|42|255|2a FF
+
+# --- mixed combos ---
+"Mix %s %d %x %c"|Test|123|255|Z|Mix Test 123 ff Z
+"%s:%d -> %x / %u"|hex|31|31|31|hex:31 -> 1f / 31
+"%d %s %d %s"|1|two|3|four|1 two 3 four
+"file:%s line:%d col:%d"|main.c|10|7|file:main.c line:10 col:7
+"%s-%u-%X-%c-%s"|id|100|48879|Q|ok|id-100-BEEF-Q-ok
+
+# --- adjacent and repeated tags ---
+"%s%s%s"|foo|bar|baz|foobarbaz
+"%d%d%d"|1|2|3|123
+"%x%x%x"|10|11|12|abc
+"%c%c%c"|x|y|z|xyz
+"%s:%d:%s:%d"|A|1|B|2|A:1:B:2
+
+# --- percent + text around ---
+"start %% mid %s end %d"|OK|5|start % mid OK end 5
+"%% %s %% %d %% %x"|tag|77|255|% tag % 77 % ff
+
+# --- hex specifics ---
+"0x%x 0x%X"|48879|48879|0xbeef 0xBEEF
+
+# --- unsigned specifics ---
+"u:%u u:%u"|0|300|u:0 u:300
+
+# --- tricky spacing ---
+"%s  %d   %x"|foo|12|31|foo  12   1f
+" %s %d %s "|x|0|y|x 0 y 
+
+# --- real-world-ish lines ---
+"%s(%d): error %X"|main.c|12|255|main.c(12): error FF
+"RGB(%d,%d,%d)"|255|128|0|RGB(255,128,0)

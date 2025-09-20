@@ -14,12 +14,13 @@ LIBFT_DIR               := ../libft
 LIBFT_A                 := $(LIBFT_DIR)/libft.a
 CPPFLAGS                += -I$(LIBFT_DIR)
 
-LIBFT_TEST              := libft/libft_test$(EXE)
-LIBFT_TEST_SRCS         := libft/libft_test.c
+LIBFT_TEST_DIR			:= libft/
+LIBFT_TEST              := $(LIBFT_TEST_DIR)libft_test$(EXE)
+LIBFT_TEST_SRCS         := $(LIBFT_TEST_DIR)libft_test.c
 LIBFT_TEST_OBJS         := $(LIBFT_TEST_SRCS:.c=.o)
 
-LIBFT_TEST_BONUS        := libft/libft_test_bonus$(EXE)
-LIBFT_TEST_BONUS_SRCS   := libft/libft_test_bonus.c
+LIBFT_TEST_BONUS        := $(LIBFT_TEST_DIR)libft_test_bonus$(EXE)
+LIBFT_TEST_BONUS_SRCS   := $(LIBFT_TEST_DIR)libft_test_bonus.c
 LIBFT_TEST_BONUS_OBJS   := $(LIBFT_TEST_BONUS_SRCS:.c=.o)
 
 all: $(LIBFT_TEST)
@@ -49,8 +50,9 @@ PRINTF_DIR			:= ../ft_printf
 PRINTF_LIB			:= $(PRINTF_DIR)/libftprintf.a
 INC_PRINTF			:= -I $(PRINTF_DIR)
 
-PRINTF_TEST			:= printf_test$(EXE)
-PRINTF_TEST_SRCS	:= printf_test.c
+PRINTF_TEST_DIR		:= ft_printf/
+PRINTF_TEST			:= $(PRINTF_TEST_DIR)printf_test$(EXE)
+PRINTF_TEST_SRCS	:= $(PRINTF_TEST_DIR)printf_test.c
 PRINTF_TEST_OBJS	:= $(PRINTF_TEST_SRCS:.c=.o)
 
 printf_test: $(PRINTF_TEST)
@@ -61,7 +63,8 @@ $(PRINTF_TEST): $(PRINTF_TEST_OBJS) $(PRINTF_LIB)
 $(PRINTF_LIB):
 	$(MAKE) -C $(PRINTF_DIR)
 
-# -------- gnl harness (NEW) -----------
+
+# -------- gnl harness -----------
 TESTER_DIR := $(abspath .)
 GNL_DIR    := $(abspath ../get_next_line)
 GNL_SRC    := $(GNL_DIR)/get_next_line.c

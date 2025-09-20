@@ -201,11 +201,8 @@ def run_project_tests(project: str, harness: str | None = None):
 
 	is_bonus = exe_path.name.startswith(project + "_test_bonus")
 	data_file = ("../data/" + project + "_bonus_data.txt") if is_bonus else ("../data/" + project + "_data.txt")
-	print(exe_name, exe_path)
-	if project == "libft":
-		#exe_name = ("libft/" + harness) or ("libft/" + project + "_test")
-		#exe_path = ROOT / (exe_name + (".exe" if os.name == "nt" else ""))
-		
+
+	if project == "libft":	
 		test_list = load_libft_tests(data_file, exe_path=exe_path)
 		grouped = {}
 		for name, cmd, expected in test_list:
@@ -237,21 +234,37 @@ def run_project_tests(project: str, harness: str | None = None):
 
 			total_passed += line_passed
 			total_tests  += line_total
-	elif project == "ft_printf":
 
+
+	elif project == "ft_printf":
 		test_list = load_printf_tests(data_file)
 		grouped = {"ft_printf": []}
 		for name, cmd, expected in test_list:
 			grouped["ft_printf"].append((cmd, expected))
 
 		for name, cases in grouped.items():
-			line_passed = 0; line_total = 0; glyphs = []
+			line_passed = 0
+			line_total = 0
+			glyphs = []
+
 			for cmd, expected in cases:
+				if isinstance(cmd, list):
+					input_arg = cmd[-1]
+				else:
+					input_arg = cmd.rsplit(" ", 1)[-1].strip()
+					if input_arg.startswith('"') and input_arg.endswith('"'):
+					    input_arg = input_arg[1:-1]
+
 				p, t, trace, got = run_libft_test(cmd, expected)
 				line_passed += p; line_total += t; glyphs.append(trace)
-				log_write(log_path, f"{name} | {expected[0]} | {got} | {'PASS' if p==t else 'FAIL'}")
+
+				pass_flag = "PASS" if p == t else "FAIL"
+				log_write(log_path, format_row(name, input_arg, expected[0], got, pass_flag))
+				#log_write(log_path, f"{name} | {expected[0]} | {got} | {'PASS' if p==t else 'FAIL'}")
 			print(f"{name} : {''.join(glyphs)}")
 			total_passed += line_passed; total_tests += line_total
+
+
 	elif project in ("get_next_line", "gnl"):
 		# locate built harnesses
 		tester_bin_dir = ROOT
@@ -277,6 +290,7 @@ def run_project_tests(project: str, harness: str | None = None):
 
 				glyph = (GREEN + "✅" + RESET) if ok else (RED + "❌" + RESET)
 				print(f"{name} : {glyph}")
+				#log_write(log_path, format_row(name, input_arg, expected[0], got, pass_flag))
 				log_write(log_path,
 						  f"{b} file {name} | EXPECT:len={len(content)} | GOT:len={len(compare_to)} | {'PASS' if ok else 'FAIL'}")
 				total_tests += 1
@@ -294,9 +308,12 @@ def run_project_tests(project: str, harness: str | None = None):
 			ok = ok1 and ok2
 			glyph = (GREEN + "✅" + RESET) if ok else (RED + "❌" + RESET)
 			print(f"multifile(multi,no_newline) : {glyph}")
+			#log_write(log_path, format_row(name, input_arg, expected[0], got, pass_flag))			
 			log_write(log_path, f"{b} multifile | {'PASS' if ok else 'FAIL'}")
 			total_tests += 1
 			if ok: total_passed += 1
+			log_write(log_path, format_row(name, input_arg, expected[0], got, pass_flag))
+
 
 	return total_passed, total_tests
 

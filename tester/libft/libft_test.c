@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "../libft/libft.h"
+#include "libft.h"
 
 /* ---------- helpers ---------- */
 
