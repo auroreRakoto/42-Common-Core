@@ -62,7 +62,7 @@ case "$PROJECT" in
       fi
       ;;
   printf|ft_printf)
-      #make -s -C "$SCRIPT_DIR" printf_test 1>/dev/null
+      make -s -C "$SCRIPT_DIR" printf_test 1>/dev/null
       HARNESS="printf_test"
       ;;
   get_next_line|gnl)

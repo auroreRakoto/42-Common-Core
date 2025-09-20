@@ -1,8 +1,19 @@
 import os
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+
+GREEN = "\033[32m"
+RED   = "\033[31m"
+RESET = "\033[0m"
 
 def load_printf_tests(filename="data/printf_data.txt"):
 	tests = []
 	data_file = (ROOT / filename).resolve()
+	if not data_file.exists():
+		print(f"{RED}❌ Test data file not found: {data_file}{RESET}")
+		return tests
+
 
 	exe_path = ROOT / ("printf_test.exe" if os.name == "nt" else "printf_test")
 	if not exe_path.exists():

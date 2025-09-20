@@ -8,7 +8,7 @@ import datetime
 import shlex
 from pathlib import Path
 from libft.libft import load_libft_tests, run_libft_test
-from ft_printf import load_printf_tests
+from ft_printf.ft_printf import load_printf_tests
 
 # --- console encoding + glyphs fallback ---
 def _choose_glyphs():
@@ -196,13 +196,16 @@ def run_project_tests(project: str, harness: str | None = None):
 	log_write(log_path, format_row("FUNCTION", "INPUT", "EXPECTED", "GOT", "PASS"))
 	log_write(log_path, format_row("-"*8, "-"*5, "-"*8, "-"*3, "----"))
 
-	exe_name = ("libft/" + harness) or ("libft/" + project + "_test")
+	exe_name = (project + "/" + harness) or (project + "/" + project + "_test")
 	exe_path = ROOT / (exe_name + (".exe" if os.name == "nt" else ""))
 
+	is_bonus = exe_path.name.startswith(project + "_test_bonus")
+	data_file = ("../data/" + project + "_bonus_data.txt") if is_bonus else ("../data/" + project + "_data.txt")
+	print(exe_name, exe_path)
 	if project == "libft":
-		is_bonus = exe_path.name.startswith("libft_test_bonus")
+		#exe_name = ("libft/" + harness) or ("libft/" + project + "_test")
+		#exe_path = ROOT / (exe_name + (".exe" if os.name == "nt" else ""))
 		
-		data_file = "../data/libft_bonus_data.txt" if is_bonus else "../data/libft_data.txt"
 		test_list = load_libft_tests(data_file, exe_path=exe_path)
 		grouped = {}
 		for name, cmd, expected in test_list:
@@ -235,11 +238,8 @@ def run_project_tests(project: str, harness: str | None = None):
 			total_passed += line_passed
 			total_tests  += line_total
 	elif project == "ft_printf":
-		log_path = new_log_file(project)
-		log_write(log_path, f"=== {project.upper()} TEST RUN @ {datetime.datetime.now()} ===")
-		log_write(log_path, "Format: FUNCTION | EXPECTED | GOT | PASS")
 
-		test_list = load_printf_tests("data/printf_data.txt")
+		test_list = load_printf_tests(data_file)
 		grouped = {"ft_printf": []}
 		for name, cmd, expected in test_list:
 			grouped["ft_printf"].append((cmd, expected))

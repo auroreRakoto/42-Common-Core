@@ -1,9 +1,9 @@
 1.
-- Libft - Bonus
+- Libft - Bonus                     --- OK
 2.
 - Born To be Root - NO
-- Get next line - Bonus?
-- Printf - Bonus?
+- Get next line - Bonus? -> yes
+- Printf - Bonus? -> yes
 3.
 - Pushswap -> look for max needed
 - Fdf -> correct previous code
