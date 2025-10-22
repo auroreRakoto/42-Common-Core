@@ -293,15 +293,40 @@ int main(int argc, char **argv)
 	}
 	if (strcmp(fn, "ft_memchr") == 0)
 	{
-		size_t nfields=0; char **f = split_fields(arg,&nfields);
-		if (!f || nfields != 3) { puts("null"); if(f)free_fields(f,nfields); return 0; }
-		size_t len = strlen(f[0]); unsigned char *buf = (unsigned char*)malloc(len?len:1);
-		if (!buf) { free_fields(f,nfields); puts("null"); return 0; }
+		int				c;
+		size_t			len;
+		size_t			nfields = 0;
+		char			**f = split_fields(arg,&nfields);
+		unsigned long	n;
+
+		if (!f || nfields != 3)
+		{
+			puts("null");
+			if(f)
+				free_fields(f,nfields);
+			return 0;
+		}
+		len = strlen(f[0]);
+		unsigned char *buf = (unsigned char*)malloc(len?len:1);
+		if (!buf)
+		{
+			free_fields(f,nfields);
+			puts("null");
+			return 0;
+		}
 		if (len) memcpy(buf,f[0],len);
-		int c = (unsigned char)f[1][0]; unsigned long n = uln(f[2]); if (n > len) n = len;
+		c = (unsigned char)f[1][0];
+		n = uln(f[2]);
+		if (n > len)
+			n = len;
 		void *p = ft_memchr(buf, c, (size_t)n);
-		if (p) printf("idx:%lu\n", (unsigned long)((unsigned char*)p - buf)); else puts("null");
-		free(buf); free_fields(f,nfields); return 0;
+		if (p)
+			printf("idx:%lu\n", (unsigned long)((unsigned char*)p - buf));
+		else
+			puts("null");
+		free(buf);
+		free_fields(f,nfields);
+		return (0);
 	}
 	if (strcmp(fn, "ft_memcmp") == 0)
 	{

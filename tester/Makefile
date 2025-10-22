@@ -46,7 +46,7 @@ libft_test_bonus: $(LIBFT_TEST_BONUS)
 
 # -------- printf harness -----------
 # Change ../printf if your folder is named ../ft_printf
-PRINTF_DIR			:= ../ft_printf
+PRINTF_DIR			?= ../ft_printf
 PRINTF_LIB			:= $(PRINTF_DIR)/libftprintf.a
 INC_PRINTF			:= -I $(PRINTF_DIR)
 
@@ -56,8 +56,10 @@ PRINTF_TEST_SRCS	:= $(PRINTF_TEST_DIR)printf_test.c
 PRINTF_TEST_OBJS	:= $(PRINTF_TEST_SRCS:.c=.o)
 
 printf_test: $(PRINTF_TEST)
+	echo $(PRINTF_DIR)
 
 $(PRINTF_TEST): $(PRINTF_TEST_OBJS) $(PRINTF_LIB)
+	echo $(PRINTF_DIR)
 	$(CC) $(CFLAGS) -o $@ $(PRINTF_TEST_OBJS) $(PRINTF_LIB) $(INC_PRINTF)
 
 $(PRINTF_LIB):
