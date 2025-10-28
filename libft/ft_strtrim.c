@@ -20,6 +20,8 @@ char	*ft_strtrim(char const *s1, char const *set)
 	size_t	end;
 
 	start = 0;
+	if (!s1 || !set)
+		return (NULL);
 	size = ft_strlen(s1);
 	if (size == 0)
 	{

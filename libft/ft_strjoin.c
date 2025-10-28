@@ -6,7 +6,7 @@
 /*   By: aurakoto <aurakoto@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/27 20:23:44 by ut                #+#    #+#             */
-/*   Updated: 2023/04/04 07:09:30 by aurakoto         ###   ########.fr       */
+/*   Updated: 2025/10/04 07:09:30 by aurakoto         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	size_t	size;
 	char	*res;
 
+	if (!s1 || !s2)
+		return (NULL);
 	size1 = ft_strlen(s1);
 	size2 = ft_strlen(s2);
 	size = size1 + size2;

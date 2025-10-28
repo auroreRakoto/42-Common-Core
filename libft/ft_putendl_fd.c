@@ -6,7 +6,7 @@
 /*   By: aurakoto <aurakoto@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/21 20:37:16 by aurakoto          #+#    #+#             */
-/*   Updated: 2023/04/04 06:07:46 by aurakoto         ###   ########.fr       */
+/*   Updated: 2025/10/04 06:07:46 by aurakoto         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 
 void	ft_putendl_fd(char *s, int fd)
 {
+	if (!s || fd < 0)
+		return (NULL);
 	ft_putstr_fd(s, fd);
 	write(fd, "\n", 1);
 }
