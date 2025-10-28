@@ -32,7 +32,7 @@ char	*ft_strtrim(char const *s1, char const *set)
 	end = size - 1;
 	while (s1[start] && ft_strchr(set, (int)s1[start]))
 		start++;
-	while (end > start && ft_strrchr(set, (int)s1[end]))
+	while (end >= start && ft_strchr(set, (int)s1[end]))
 		end--;
 	res = (char *)malloc(sizeof(char) * (end - start + 2));
 	if (!res)
@@ -40,10 +40,3 @@ char	*ft_strtrim(char const *s1, char const *set)
 	ft_strlcpy(res, (s1 + start), end - start + 2);
 	return (res);
 }
-
-/*
-int	main(void)
-{
-	ft_strtrim("", "");
-}
-*/
