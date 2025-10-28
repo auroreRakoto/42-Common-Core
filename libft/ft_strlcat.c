@@ -12,16 +12,6 @@
 
 #include "libft.h"
 
-int	ft_strlen(char *src)
-{
-	int	size;
-
-	size = 0;
-	while (src[size])
-		size++;
-	return (size);
-}
-
 unsigned int	ft_strlcat(char *dest, char *src, unsigned int size)
 {
 	unsigned int	len_dest;
