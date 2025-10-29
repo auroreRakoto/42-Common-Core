@@ -44,7 +44,7 @@ char	*ft_get_line(char *line, char *buffer, int *pos, int *end_line)
 	len = 0;
 	while (line && line[len])
 		len++;
-	while (buffer[*pos + i] && buffer[*pos + i] != '\n' && *pos < BUFFER_SIZE)
+	while (buffer[*pos + i] && buffer[*pos + i] != '\n' && *pos + i < BUFFER_SIZE)
 		i++;
 	if (buffer[*pos + i] == '\n')
 	{
@@ -53,8 +53,8 @@ char	*ft_get_line(char *line, char *buffer, int *pos, int *end_line)
 	}
 	new_pos = *pos + i;
 	res = ft_fill_res(buffer + *pos, line, len, i);
-	if (*pos == BUFFER_SIZE)
-		*pos = 0;
+	if (*pos >= BUFFER_SIZE)
+		*pos = new_pos % BUFFER_SIZE;
 	else
 		*pos = new_pos;
 	free(line);
@@ -73,7 +73,6 @@ char	*ft_read_or_fill(int fd, char *buffer, int *pos, int *num_read)
 		if (buffer[*pos] == 0)
 		{
 			*num_read = read(fd, buffer, BUFFER_SIZE);
-			buffer[*num_read] = 0;
 			if (*num_read < 0)
 			{
 				free(line);
@@ -81,6 +80,7 @@ char	*ft_read_or_fill(int fd, char *buffer, int *pos, int *num_read)
 			}
 			if (*num_read == 0)
 				return (line);
+			buffer[*num_read] = 0;
 		}
 		line = ft_get_line(line, buffer, pos, &end_line);
 		if (!line)
@@ -89,7 +89,7 @@ char	*ft_read_or_fill(int fd, char *buffer, int *pos, int *num_read)
 	return (line);
 }
 
-void	ft_bzero(void *s, int n)
+void	ft_bzero(void *s, size_t n)
 {
 	char	*p;
 
